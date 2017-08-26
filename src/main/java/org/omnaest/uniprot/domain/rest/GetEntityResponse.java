@@ -16,22 +16,15 @@
 
 
 */
-package org.omnaest.uniprot;
+package org.omnaest.uniprot.domain.rest;
 
-import org.junit.Test;
-import org.omnaest.uniprot.domain.rest.SearchResponse;
-import org.omnaest.utils.JSONHelper;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class UniProtRESTUtilsTest
+@XmlRootElement(name = "uniprot")
+@XmlAccessorType(XmlAccessType.NONE)
+public class GetEntityResponse extends SearchResponse
 {
-
-	@Test
-	public void testSearchFor() throws Exception
-	{
-		SearchResponse searchResponse = UniProtRESTUtils.getInstance()
-														.searchFor("ACSS1");
-
-		System.out.println(JSONHelper.prettyPrint(searchResponse));
-	}
 
 }

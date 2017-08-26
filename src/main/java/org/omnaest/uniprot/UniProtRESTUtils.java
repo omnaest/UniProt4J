@@ -18,7 +18,10 @@
 */
 package org.omnaest.uniprot;
 
+import org.omnaest.uniprot.domain.rest.GetEntityResponse;
 import org.omnaest.uniprot.domain.rest.SearchResponse;
+import org.omnaest.utils.cache.Cache;
+import org.omnaest.utils.rest.client.CachedRestClient;
 import org.omnaest.utils.rest.client.RestClient;
 import org.omnaest.utils.rest.client.XMLRestClient;
 import org.slf4j.Logger;
@@ -28,11 +31,41 @@ public class UniProtRESTUtils
 {
 	private static final Logger LOG = LoggerFactory.getLogger(UniProtRESTUtils.class);
 
-	public static SearchResponse searchFor(String query)
+	public static interface UniProtRawRESTAPIAccessor
 	{
-		RestClient restClient = new XMLRestClient();
-		String url = "http://www.uniprot.org/uniprot/?query=" + query + "&sort=score&format=xml";
-		LOG.info("Request url: " + url);
-		return restClient.requestGet(url, SearchResponse.class);
+		public SearchResponse searchFor(String query);
+
+		public GetEntityResponse getEntity(String entityId);
 	}
+
+	public static UniProtRawRESTAPIAccessor getInstance()
+	{
+		Cache cache = null;
+		return getInstance(cache);
+	}
+
+	public static UniProtRawRESTAPIAccessor getInstance(Cache cache)
+	{
+		return new UniProtRawRESTAPIAccessor()
+		{
+			private RestClient restClient = new CachedRestClient(new XMLRestClient()).setCache(cache);
+
+			@Override
+			public SearchResponse searchFor(String query)
+			{
+				String url = "http://www.uniprot.org/uniprot/?query=" + query + "&sort=score&format=xml";
+				LOG.info("Request url: " + url);
+				return this.restClient.requestGet(url, SearchResponse.class);
+			}
+
+			@Override
+			public GetEntityResponse getEntity(String entityId)
+			{
+				String url = "http://www.uniprot.org/uniprot/" + entityId + ".xml";
+				LOG.info("Request url: " + url);
+				return this.restClient.requestGet(url, GetEntityResponse.class);
+			}
+		};
+	}
+
 }

@@ -46,6 +46,9 @@ public class Entry
 	private String name;
 
 	@XmlElement
+	private Protein protein;
+
+	@XmlElement
 	private List<String> accession = new ArrayList<>();
 
 	@XmlElementWrapper(name = "gene")
@@ -72,6 +75,16 @@ public class Entry
 
 	@XmlElement
 	private Sequence sequence;
+
+	public Protein getProtein()
+	{
+		return this.protein;
+	}
+
+	public void setProtein(Protein protein)
+	{
+		this.protein = protein;
+	}
 
 	public Sequence getSequence()
 	{
@@ -211,6 +224,15 @@ public class Entry
 	public void setAccession(List<String> accession)
 	{
 		this.accession = accession;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Entry [dataset=" + this.dataset + ", created=" + this.created + ", modified=" + this.modified + ", version=" + this.version + ", name="
+				+ this.name + ", protein=" + this.protein + ", accession=" + this.accession + ", genes=" + this.genes + ", organisms=" + this.organisms
+				+ ", references=" + this.references + ", comments=" + this.comments + ", dbReferences=" + this.dbReferences + ", features=" + this.features
+				+ ", evidences=" + this.evidences + ", sequence=" + this.sequence + "]";
 	}
 
 }
