@@ -18,7 +18,6 @@
 */
 package org.omnaest.uniprot;
 
-import java.io.File;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -33,7 +32,8 @@ public class UniProtUtilsTest
 	{
 		UniProtRESTAccessor uniProtRESTAccessor = UniProtUtils	.getInstance()
 																.useRESTApi()
-																.withSingleFileCache(new File("C:/Temp/uniprot_cache.json"));
+																.withSingleTempFileCache();
+		//.withSingleFileCache(new File("C:/Temp/uniprot_cache.json"));
 		{
 			String json = JSONHelper.prettyPrint(uniProtRESTAccessor.searchFor("ACSS1")
 																	.map(entity -> entity.get())

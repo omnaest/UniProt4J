@@ -19,6 +19,7 @@
 package org.omnaest.uniprot;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -28,9 +29,13 @@ import org.omnaest.uniprot.domain.rest.GetEntityResponse;
 import org.omnaest.uniprot.domain.rest.SearchResponse;
 import org.omnaest.utils.cache.Cache;
 import org.omnaest.utils.cache.CacheUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UniProtUtils
 {
+	private static final Logger LOG = LoggerFactory.getLogger(UniProtUtils.class);
+
 	public static interface UniProtLoader
 	{
 		public UniProtRESTAccessor useRESTApi();
@@ -38,13 +43,31 @@ public class UniProtUtils
 
 	public static interface UniProtRESTAccessor
 	{
+		/**
+		 * @see Cache
+		 * @param cache
+		 * @return
+		 */
+		public UniProtRESTAccessor withCache(Cache cache);
+
+		/**
+		 * @see #withCache(Cache)
+		 * @param file
+		 * @return
+		 */
+		public UniProtRESTAccessor withSingleFileCache(File file);
+
+		/**
+		 * @see #withSingleFileCache(File)
+		 * @see File#createTempFile(String, String)
+		 * @return
+		 */
+		public UniProtRESTAccessor withSingleTempFileCache();
+
 		public Stream<EntityAccessor> searchFor(String query);
 
 		public EntityAccessor getByUniProtId(String id);
 
-		UniProtRESTAccessor withCache(Cache cache);
-
-		UniProtRESTAccessor withSingleFileCache(File file);
 	}
 
 	public static interface EntityAccessor
@@ -74,7 +97,20 @@ public class UniProtUtils
 					@Override
 					public UniProtRESTAccessor withSingleFileCache(File file)
 					{
-						this.cache = CacheUtils.newJsonFileCache(file);
+						return this.withCache(CacheUtils.newJsonFileCache(file));
+					}
+
+					@Override
+					public UniProtRESTAccessor withSingleTempFileCache()
+					{
+						try
+						{
+							this.withSingleFileCache(File.createTempFile("uniprotCache", "json"));
+						}
+						catch (IOException e)
+						{
+							LOG.error("Failed to create temp file cache", e);
+						}
 						return this;
 					}
 
@@ -115,6 +151,7 @@ public class UniProtUtils
 																							.findFirst()
 																							.get());
 					}
+
 				};
 			}
 		};
