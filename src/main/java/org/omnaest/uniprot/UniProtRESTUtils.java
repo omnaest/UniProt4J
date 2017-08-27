@@ -53,10 +53,8 @@ public class UniProtRESTUtils
 			@Override
 			public SearchResponse searchFor(String query, int offset, int limit)
 			{
-				String url = "http://www.uniprot.org/uniprot";
-
-				String uri = this.restClient.urlBuilder()
-											.setBaseUrl(url)
+				String url = this.restClient.urlBuilder()
+											.setBaseUrl("http://www.uniprot.org/uniprot")
 											.addQueryParameter("query", query)
 											.addQueryParameter("offset", "" + offset)
 											.addQueryParameter("limit", "" + limit)
@@ -65,7 +63,7 @@ public class UniProtRESTUtils
 											.build();
 
 				LOG.info("Request url: " + url);
-				return this.restClient.requestGet(uri, SearchResponse.class);
+				return this.restClient.requestGet(url, SearchResponse.class);
 			}
 
 			@Override
