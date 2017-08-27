@@ -16,53 +16,26 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlAttribute;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Evidence
+public class Author
 {
 	@XmlAttribute
-	private String key;
+	private String name;
 
-	@XmlAttribute
-	private String type;
-
-	@XmlAnyElement
-	private Object content;
-
-	public String getKey()
+	public String getName()
 	{
-		return this.key;
+		return this.name;
 	}
 
-	public void setKey(String key)
+	public void setName(String name)
 	{
-		this.key = key;
-	}
-
-	public String getType()
-	{
-		return this.type;
-	}
-
-	public void setType(String type)
-	{
-		this.type = type;
-	}
-
-	public Object getContent()
-	{
-		return this.content;
-	}
-
-	public void setContent(Object content)
-	{
-		this.content = content;
+		this.name = name;
 	}
 
 }

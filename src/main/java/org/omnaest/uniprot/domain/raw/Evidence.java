@@ -16,32 +16,53 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlAnyElement;
+import javax.xml.bind.annotation.XmlAttribute;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Location
+public class Evidence
 {
-	@XmlElement
-	private Position position;
+	@XmlAttribute
+	private String key;
 
-	public Position getPosition()
+	@XmlAttribute
+	private String type;
+
+	@XmlAnyElement
+	private Object content;
+
+	public String getKey()
 	{
-		return this.position;
+		return this.key;
 	}
 
-	public void setPosition(Position position)
+	public void setKey(String key)
 	{
-		this.position = position;
+		this.key = key;
 	}
 
-	@Override
-	public String toString()
+	public String getType()
 	{
-		return "Location [position=" + this.position + "]";
+		return this.type;
+	}
+
+	public void setType(String type)
+	{
+		this.type = type;
+	}
+
+	public Object getContent()
+	{
+		return this.content;
+	}
+
+	public void setContent(Object content)
+	{
+		this.content = content;
 	}
 
 }

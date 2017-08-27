@@ -1,4 +1,4 @@
-/*
+/* 
 
 	Copyright 2017 Danny Kunz
 
@@ -13,18 +13,43 @@
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-
+	
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlValue;
 
-@XmlRootElement(name = "uniprot")
 @XmlAccessorType(XmlAccessType.NONE)
-public class GetEntityResponse extends SearchResponse
+public class Name
 {
+	@XmlAttribute
+	private String type;
+
+	@XmlValue
+	private String name;
+
+	public String getType()
+	{
+		return this.type;
+	}
+
+	public void setType(String type)
+	{
+		this.type = type;
+	}
+
+	public String getName()
+	{
+		return this.name;
+	}
+
+	public void setName(String name)
+	{
+		this.name = name;
+	}
 
 }

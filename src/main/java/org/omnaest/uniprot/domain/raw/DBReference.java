@@ -1,4 +1,4 @@
-/* 
+/*
 
 	Copyright 2017 Danny Kunz
 
@@ -13,24 +13,40 @@
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-	
+
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.XmlElement;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Name
+public class DBReference
 {
 	@XmlAttribute
 	private String type;
 
-	@XmlValue
-	private String name;
+	@XmlAttribute
+	private String id;
+
+	@XmlElement(name = "property")
+	private List<Property> properties = new ArrayList<>();
+
+	public List<Property> getProperties()
+	{
+		return this.properties;
+	}
+
+	public void setProperties(List<Property> properties)
+	{
+		this.properties = properties;
+	}
 
 	public String getType()
 	{
@@ -42,14 +58,14 @@ public class Name
 		this.type = type;
 	}
 
-	public String getName()
+	public String getId()
 	{
-		return this.name;
+		return this.id;
 	}
 
-	public void setName(String name)
+	public void setId(String id)
 	{
-		this.name = name;
+		this.id = id;
 	}
 
 }

@@ -16,31 +16,32 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
-
-import java.util.ArrayList;
-import java.util.List;
+package org.omnaest.uniprot.domain.raw;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "uniprot")
 @XmlAccessorType(XmlAccessType.NONE)
-public class SearchResponse
+public class Location
 {
-	@XmlElement(name = "entry")
-	private List<Entry> entries = new ArrayList<>();
+	@XmlElement
+	private Position position;
 
-	public List<Entry> getEntries()
+	public Position getPosition()
 	{
-		return this.entries;
+		return this.position;
 	}
 
-	public void setEntries(List<Entry> entries)
+	public void setPosition(Position position)
 	{
-		this.entries = entries;
+		this.position = position;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Location [position=" + this.position + "]";
 	}
 
 }

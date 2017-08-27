@@ -16,56 +16,58 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
-
-import java.util.ArrayList;
-import java.util.List;
+package org.omnaest.uniprot.domain.raw;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class DBReference
+public class ProteinName
 {
-	@XmlAttribute
-	private String type;
+	@XmlElement
+	private String fullName;
 
-	@XmlAttribute
-	private String id;
+	@XmlElement
+	private String shortName;
 
-	@XmlElement(name = "property")
-	private List<Property> properties = new ArrayList<>();
+	@XmlElement
+	private String ecNumber;
 
-	public List<Property> getProperties()
+	public String getShortName()
 	{
-		return this.properties;
+		return this.shortName;
 	}
 
-	public void setProperties(List<Property> properties)
+	public void setShortName(String shortName)
 	{
-		this.properties = properties;
+		this.shortName = shortName;
 	}
 
-	public String getType()
+	public String getFullName()
 	{
-		return this.type;
+		return this.fullName;
 	}
 
-	public void setType(String type)
+	public void setFullName(String fullName)
 	{
-		this.type = type;
+		this.fullName = fullName;
 	}
 
-	public String getId()
+	public String getEcNumber()
 	{
-		return this.id;
+		return this.ecNumber;
 	}
 
-	public void setId(String id)
+	public void setEcNumber(String ecNumber)
 	{
-		this.id = id;
+		this.ecNumber = ecNumber;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "ProteinName [fullName=" + this.fullName + ", shortName=" + this.shortName + ", ecNumber=" + this.ecNumber + "]";
 	}
 
 }

@@ -42,12 +42,13 @@ public class UniProtUtilsTest
 		//																.map(entity -> entity.get())
 		//																.collect(Collectors.toList()));
 
-		uniProtRESTAccessor	.searchFor(t -> t.limit(1), "ACOT organism: \"homo sapiens\"")
+		uniProtRESTAccessor	.searchFor(t -> t.limit(20), "ACOT organism:\"homo sapiens\"")
 							.forEach(accessor ->
 							{
 								System.out.println(accessor	.get()
 															.getName());
 								System.out.println(JSONHelper.prettyPrint(accessor.getMetalBindings()));
+								System.out.println(JSONHelper.prettyPrint(accessor.getBindings()));
 							});
 
 		Stream<EntityAccessor> accessors = uniProtRESTAccessor.getByUniProtId("Q00955", "Q8WYK0");

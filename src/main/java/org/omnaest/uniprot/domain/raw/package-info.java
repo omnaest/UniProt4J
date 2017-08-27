@@ -1,4 +1,5 @@
-/*
+
+/* 
 
 	Copyright 2017 Danny Kunz
 
@@ -13,29 +14,8 @@
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-
+	
 
 */
-package org.omnaest.uniprot.domain.rest;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-
-@XmlAccessorType(XmlAccessType.NONE)
-public class Author
-{
-	@XmlAttribute
-	private String name;
-
-	public String getName()
-	{
-		return this.name;
-	}
-
-	public void setName(String name)
-	{
-		this.name = name;
-	}
-
-}
+@javax.xml.bind.annotation.XmlSchema(xmlns = { @javax.xml.bind.annotation.XmlNs(prefix = "", namespaceURI = "http://uniprot.org/uniprot") })
+package org.omnaest.uniprot.domain.raw;

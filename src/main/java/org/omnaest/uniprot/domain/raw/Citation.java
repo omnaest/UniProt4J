@@ -16,41 +16,57 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Reference
+public class Citation
 {
 	@XmlElement
-	private String scope;
+	private String title;
 
-	@XmlElement(name = "citation")
-	private List<Citation> citations;
+	@XmlElementWrapper(name = "authorList")
+	@XmlElement(name = "person")
+	private List<Author> authors = new ArrayList<>();
 
-	public String getScope()
+	@XmlElement(name = "dbReference")
+	private List<DBReference> dbReferences = new ArrayList<>();
+
+	public String getTitle()
 	{
-		return this.scope;
+		return this.title;
 	}
 
-	public void setScope(String scope)
+	public void setTitle(String title)
 	{
-		this.scope = scope;
+		this.title = title;
 	}
 
-	public List<Citation> getCitations()
+	public List<Author> getAuthors()
 	{
-		return this.citations;
+		return this.authors;
 	}
 
-	public void setCitations(List<Citation> citations)
+	public void setAuthors(List<Author> authors)
 	{
-		this.citations = citations;
+		this.authors = authors;
+	}
+
+	public List<DBReference> getDbReferences()
+	{
+		return this.dbReferences;
+	}
+
+	public void setDbReferences(List<DBReference> dbReferences)
+	{
+		this.dbReferences = dbReferences;
 	}
 
 }

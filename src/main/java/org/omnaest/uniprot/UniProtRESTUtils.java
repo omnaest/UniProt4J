@@ -18,8 +18,8 @@
 */
 package org.omnaest.uniprot;
 
-import org.omnaest.uniprot.domain.rest.GetEntityResponse;
-import org.omnaest.uniprot.domain.rest.SearchResponse;
+import org.omnaest.uniprot.domain.raw.GetEntityResponse;
+import org.omnaest.uniprot.domain.raw.SearchResponse;
 import org.omnaest.utils.cache.Cache;
 import org.omnaest.utils.rest.client.CachedRestClient;
 import org.omnaest.utils.rest.client.RestClient;

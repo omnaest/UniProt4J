@@ -16,7 +16,7 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,40 +24,49 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Protein
+public class Organism
 {
-	@XmlElement
-	private ProteinName recommendedName;
+	@XmlElement(name = "name")
+	private List<Name> names = new ArrayList<>();
 
-	@XmlElement(name = "alternativeName")
-	private List<ProteinName> alternativeNames = new ArrayList<>();
+	@XmlElement(name = "dbReference")
+	private List<DBReference> dbReferences = new ArrayList<>();
 
-	public ProteinName getRecommendedName()
+	@XmlElementWrapper(name = "lineage")
+	@XmlElement(name = "taxon")
+	private List<String> lineage = new ArrayList<>();
+
+	public List<String> getLineage()
 	{
-		return this.recommendedName;
+		return this.lineage;
 	}
 
-	public void setRecommendedName(ProteinName recommendedName)
+	public void setLineage(List<String> lineage)
 	{
-		this.recommendedName = recommendedName;
+		this.lineage = lineage;
 	}
 
-	public List<ProteinName> getAlternativeNames()
+	public List<DBReference> getDbReferences()
 	{
-		return this.alternativeNames;
+		return this.dbReferences;
 	}
 
-	public void setAlternativeNames(List<ProteinName> alternativeNames)
+	public void setDbReferences(List<DBReference> dbReferences)
 	{
-		this.alternativeNames = alternativeNames;
+		this.dbReferences = dbReferences;
 	}
 
-	@Override
-	public String toString()
+	public List<Name> getNames()
 	{
-		return "Protein [recommendedName=" + this.recommendedName + ", alternativeNames=" + this.alternativeNames + "]";
+		return this.names;
+	}
+
+	public void setNames(List<Name> names)
+	{
+		this.names = names;
 	}
 
 }

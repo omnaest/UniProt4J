@@ -1,5 +1,4 @@
-
-/* 
+/*
 
 	Copyright 2017 Danny Kunz
 
@@ -14,8 +13,18 @@
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-	
+
 
 */
-@javax.xml.bind.annotation.XmlSchema(xmlns = { @javax.xml.bind.annotation.XmlNs(prefix = "", namespaceURI = "http://uniprot.org/uniprot") })
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "uniprot")
+@XmlAccessorType(XmlAccessType.NONE)
+public class GetEntityResponse extends SearchResponse
+{
+
+}

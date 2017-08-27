@@ -16,7 +16,7 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
 
 import java.util.function.Predicate;
 

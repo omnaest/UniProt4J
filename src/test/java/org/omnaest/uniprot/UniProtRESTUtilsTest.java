@@ -19,7 +19,7 @@
 package org.omnaest.uniprot;
 
 import org.junit.Test;
-import org.omnaest.uniprot.domain.rest.SearchResponse;
+import org.omnaest.uniprot.domain.raw.SearchResponse;
 import org.omnaest.utils.JSONHelper;
 
 public class UniProtRESTUtilsTest

@@ -16,58 +16,31 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
+@XmlRootElement(name = "uniprot")
 @XmlAccessorType(XmlAccessType.NONE)
-public class ProteinName
+public class SearchResponse
 {
-	@XmlElement
-	private String fullName;
+	@XmlElement(name = "entry")
+	private List<Entry> entries = new ArrayList<>();
 
-	@XmlElement
-	private String shortName;
-
-	@XmlElement
-	private String ecNumber;
-
-	public String getShortName()
+	public List<Entry> getEntries()
 	{
-		return this.shortName;
+		return this.entries;
 	}
 
-	public void setShortName(String shortName)
+	public void setEntries(List<Entry> entries)
 	{
-		this.shortName = shortName;
-	}
-
-	public String getFullName()
-	{
-		return this.fullName;
-	}
-
-	public void setFullName(String fullName)
-	{
-		this.fullName = fullName;
-	}
-
-	public String getEcNumber()
-	{
-		return this.ecNumber;
-	}
-
-	public void setEcNumber(String ecNumber)
-	{
-		this.ecNumber = ecNumber;
-	}
-
-	@Override
-	public String toString()
-	{
-		return "ProteinName [fullName=" + this.fullName + ", shortName=" + this.shortName + ", ecNumber=" + this.ecNumber + "]";
+		this.entries = entries;
 	}
 
 }

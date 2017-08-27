@@ -16,39 +16,41 @@
 
 
 */
-package org.omnaest.uniprot.domain.rest;
+package org.omnaest.uniprot.domain.raw;
+
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Property
+public class Reference
 {
-	@XmlAttribute
-	private String type;
+	@XmlElement
+	private String scope;
 
-	@XmlAttribute
-	private String value;
+	@XmlElement(name = "citation")
+	private List<Citation> citations;
 
-	public String getType()
+	public String getScope()
 	{
-		return this.type;
+		return this.scope;
 	}
 
-	public void setType(String type)
+	public void setScope(String scope)
 	{
-		this.type = type;
+		this.scope = scope;
 	}
 
-	public String getValue()
+	public List<Citation> getCitations()
 	{
-		return this.value;
+		return this.citations;
 	}
 
-	public void setValue(String value)
+	public void setCitations(List<Citation> citations)
 	{
-		this.value = value;
+		this.citations = citations;
 	}
 
 }
