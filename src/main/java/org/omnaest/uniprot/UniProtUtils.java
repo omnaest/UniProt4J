@@ -20,13 +20,32 @@ package org.omnaest.uniprot;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.omnaest.uniprot.UniProtRESTUtils.UniProtRawRESTAPIAccessor;
+import org.omnaest.uniprot.domain.Binding;
+import org.omnaest.uniprot.domain.CodeAndPosition;
+import org.omnaest.uniprot.domain.MetalBinding;
 import org.omnaest.uniprot.domain.rest.Entry;
+import org.omnaest.uniprot.domain.rest.Feature;
+import org.omnaest.uniprot.domain.rest.Feature.Type;
 import org.omnaest.uniprot.domain.rest.GetEntityResponse;
+import org.omnaest.uniprot.domain.rest.Location;
+import org.omnaest.uniprot.domain.rest.Position;
 import org.omnaest.uniprot.domain.rest.SearchResponse;
+import org.omnaest.uniprot.domain.rest.Sequence;
+import org.omnaest.utils.StreamUtils;
 import org.omnaest.utils.cache.Cache;
 import org.omnaest.utils.cache.CacheUtils;
 import org.slf4j.Logger;
@@ -64,7 +83,13 @@ public class UniProtUtils
 		 */
 		public UniProtRESTAccessor withSingleTempFileCache();
 
+		public Stream<EntityAccessor> searchFor(String... querys);
+
+		public Stream<EntityAccessor> searchFor(UnaryOperator<Stream<EntityAccessor>> partialSearchModifier, String... querys);
+
 		public Stream<EntityAccessor> searchFor(String query);
+
+		public Stream<EntityAccessor> getByUniProtId(String... ids);
 
 		public EntityAccessor getByUniProtId(String id);
 
@@ -73,6 +98,21 @@ public class UniProtUtils
 	public static interface EntityAccessor
 	{
 		public Entry get();
+
+		public List<MetalBinding> getMetalBindings();
+
+		public List<Binding> getBindings();
+
+		public SequenceAccessor getSequence();
+	}
+
+	public static interface SequenceAccessor
+	{
+		boolean hasSequence();
+
+		public String get();
+
+		public Stream<CodeAndPosition> getAsStream();
 	}
 
 	public static UniProtLoader getInstance()
@@ -117,11 +157,50 @@ public class UniProtUtils
 					@Override
 					public Stream<EntityAccessor> searchFor(String query)
 					{
+						return StreamUtils	.fromSupplier(new Supplier<List<EntityAccessor>>()
+						{
+							private int	limit	= 25;
+							private int	offset	= 0;
+
+							@Override
+							public List<EntityAccessor> get()
+							{
+								return searchFor(query, this.getAndIncrementOffset(), this.limit);
+							}
+
+							private int getAndIncrementOffset()
+							{
+								int retval = this.offset;
+								this.offset += this.limit;
+								return retval;
+							}
+						}, (result) -> result == null || result.isEmpty())
+											.flatMap(batch -> batch.stream());
+					}
+
+					@Override
+					public Stream<EntityAccessor> searchFor(String... querys)
+					{
+						return this.searchFor(s -> s, querys);
+					}
+
+					@Override
+					public Stream<EntityAccessor> searchFor(UnaryOperator<Stream<EntityAccessor>> partialSearchModifier, String... querys)
+					{
+						return StreamUtils.concat(Arrays.asList(querys)
+														.stream()
+														.map(this::searchFor)
+														.map(accessors -> partialSearchModifier.apply(accessors)));
+					}
+
+					public List<EntityAccessor> searchFor(String query, int offset, int limit)
+					{
 						SearchResponse searchResponse = this.getRestAPIAccessorInstance()
-															.searchFor(query);
+															.searchFor(query, offset, limit);
 
 						return (searchResponse == null ? Collections.<Entry>emptyList() : searchResponse.getEntries())	.stream()
-																														.map(entry -> this.createEntityAccessor(entry));
+																														.map(entry -> this.createEntityAccessor(entry))
+																														.collect(Collectors.toList());
 					}
 
 					private UniProtRawRESTAPIAccessor getRestAPIAccessorInstance()
@@ -138,6 +217,135 @@ public class UniProtUtils
 							{
 								return entry;
 							}
+
+							@Override
+							public List<MetalBinding> getMetalBindings()
+							{
+								return this	.get()
+											.getFeatures()
+											.stream()
+											.filter(feature -> !feature.isMarkedAsRemoved())
+											.filter(feature -> feature.isOfType(Type.METAL_BINDING_SITE))
+											.map(feature ->
+											{
+												int positionValue = this.determinePositionValue(feature);
+												String metalAndType = feature.getDescription();
+												String[] tokens = StringUtils.split(metalAndType, ";");
+												String metal = tokens.length >= 1 ? tokens[0].trim() : "";
+												String type = tokens.length >= 2 ? tokens[1].trim() : "";
+												return new MetalBinding(metal, type, Arrays	.asList(positionValue)
+																							.stream()
+																							.filter(value -> value >= 0)
+																							.collect(Collectors.toList()));
+											})
+											.collect(Collectors.groupingBy(metalBinding -> Arrays.asList(metalBinding.getMetal(), metalBinding.getType())))
+											.entrySet()
+											.stream()
+											.map(entry -> new MetalBinding(	entry	.getKey()
+																					.get(0),
+																			entry	.getKey()
+																					.get(1),
+																			entry	.getValue()
+																					.stream()
+																					.flatMap(binding -> binding	.getPositions()
+																												.stream())
+																					.collect(Collectors.toSet())))
+											.collect(Collectors.toList());
+							}
+
+							@Override
+							public SequenceAccessor getSequence()
+							{
+								Sequence sequence = this.get()
+														.getSequence();
+								return new SequenceAccessor()
+								{
+
+									@Override
+									public Stream<CodeAndPosition> getAsStream()
+									{
+										int length = NumberUtils.toInt(sequence.getLength(), -1);
+
+										AtomicInteger position = new AtomicInteger();
+										Pattern codePattern = Pattern.compile("[a-zA-Z0-9]");
+										List<CodeAndPosition> retval = Arrays	.asList(ArrayUtils.toObject(this.get()
+																												.toCharArray()))
+																				.stream()
+																				.filter(code -> codePattern	.matcher(String.valueOf(code))
+																											.matches())
+																				.map(code -> new CodeAndPosition(code, position.getAndIncrement()))
+																				.collect(Collectors.toList());
+
+										if (position.get() != length)
+										{
+											throw new IllegalStateException("Sequence length differs to actual sequence code: " + length + " != "
+													+ position.get());
+										}
+
+										return retval.stream();
+									}
+
+									@Override
+									public String get()
+									{
+										return sequence.getValue();
+									}
+
+									@Override
+									public boolean hasSequence()
+									{
+										return StringUtils.isNotBlank(this.get());
+									}
+
+								};
+							}
+
+							@Override
+							public List<Binding> getBindings()
+							{
+								return this	.get()
+											.getFeatures()
+											.stream()
+											.filter(feature -> !feature.isMarkedAsRemoved())
+											.filter(feature -> feature.isOfType(Type.BINDING_SITE))
+											.map(feature ->
+											{
+												int positionValue = this.determinePositionValue(feature);
+												String compoundAndDescription = feature.getDescription();
+												String[] tokens = StringUtils.split(compoundAndDescription, ";");
+												String compound = tokens.length >= 1 ? tokens[0].trim() : "";
+												String description = tokens.length >= 2 ? tokens[1].trim() : "";
+												return new Binding(compound, description, Arrays.asList(positionValue)
+																								.stream()
+																								.filter(value -> value >= 0)
+																								.collect(Collectors.toList()));
+											})
+											.collect(Collectors.groupingBy(metalBinding -> Arrays.asList(	metalBinding.getCompound(),
+																											metalBinding.getDescription())))
+											.entrySet()
+											.stream()
+											.map(entry -> new Binding(	entry	.getKey()
+																				.get(0),
+																		entry	.getKey()
+																				.get(1),
+																		entry	.getValue()
+																				.stream()
+																				.flatMap(binding -> binding	.getPositions()
+																											.stream())
+																				.collect(Collectors.toSet())))
+											.collect(Collectors.toList());
+							}
+
+							private int determinePositionValue(Feature feature)
+							{
+								return NumberUtils.toInt(((Supplier<String>) () ->
+								{
+									Location location = feature.getLocation();
+									Position position = location != null ? location.getPosition() : null;
+									return position != null ? position.getPosition() : null;
+								}).get(), -1);
+							}
+
 						};
 					}
 
@@ -150,6 +358,14 @@ public class UniProtUtils
 																							.stream()
 																							.findFirst()
 																							.get());
+					}
+
+					@Override
+					public Stream<EntityAccessor> getByUniProtId(String... ids)
+					{
+						return StreamUtils.concat(Arrays.asList(ids)
+														.stream()
+														.map(id -> Stream.of(this.getByUniProtId(id))));
 					}
 
 				};

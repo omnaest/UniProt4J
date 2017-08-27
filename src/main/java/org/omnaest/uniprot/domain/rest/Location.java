@@ -16,22 +16,32 @@
 
 
 */
-package org.omnaest.uniprot;
+package org.omnaest.uniprot.domain.rest;
 
-import org.junit.Test;
-import org.omnaest.uniprot.domain.rest.SearchResponse;
-import org.omnaest.utils.JSONHelper;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 
-public class UniProtRESTUtilsTest
+@XmlAccessorType(XmlAccessType.NONE)
+public class Location
 {
+	@XmlElement
+	private Position position;
 
-	@Test
-	public void testSearchFor() throws Exception
+	public Position getPosition()
 	{
-		SearchResponse searchResponse = UniProtRESTUtils.getInstance()
-														.searchFor("ADH", 0, 1);
+		return this.position;
+	}
 
-		System.out.println(JSONHelper.prettyPrint(searchResponse));
+	public void setPosition(Position position)
+	{
+		this.position = position;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Location [position=" + this.position + "]";
 	}
 
 }

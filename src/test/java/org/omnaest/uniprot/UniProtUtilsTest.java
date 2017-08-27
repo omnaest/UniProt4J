@@ -18,9 +18,11 @@
 */
 package org.omnaest.uniprot;
 
-import java.util.stream.Collectors;
+import java.io.File;
+import java.util.stream.Stream;
 
 import org.junit.Test;
+import org.omnaest.uniprot.UniProtUtils.EntityAccessor;
 import org.omnaest.uniprot.UniProtUtils.UniProtRESTAccessor;
 import org.omnaest.utils.JSONHelper;
 
@@ -32,25 +34,35 @@ public class UniProtUtilsTest
 	{
 		UniProtRESTAccessor uniProtRESTAccessor = UniProtUtils	.getInstance()
 																.useRESTApi()
-																.withSingleTempFileCache();
-		//.withSingleFileCache(new File("C:/Temp/uniprot_cache.json"));
-		{
-			String json = JSONHelper.prettyPrint(uniProtRESTAccessor.searchFor("ACSS1")
-																	.map(entity -> entity.get())
-																	.collect(Collectors.toList()));
+																//.withSingleTempFileCache();
+																.withSingleFileCache(new File("C:/Temp/uniprot_cache.json"));
 
-			System.out.println(json);
-		}
+		//		String json = JSONHelper.prettyPrint(uniProtRESTAccessor.searchFor("ADH")
+		//																.limit(1)
+		//																.map(entity -> entity.get())
+		//																.collect(Collectors.toList()));
 
-		System.out.println("again ----------------------------------------------------------------");
+		uniProtRESTAccessor	.searchFor(t -> t.limit(1), "ACOT organism: \"homo sapiens\"")
+							.forEach(accessor ->
+							{
+								System.out.println(accessor	.get()
+															.getName());
+								System.out.println(JSONHelper.prettyPrint(accessor.getMetalBindings()));
+							});
 
-		{
-			String json = JSONHelper.prettyPrint(uniProtRESTAccessor.searchFor("ACSS1")
-																	.map(entity -> entity.get())
-																	.collect(Collectors.toList()));
+		Stream<EntityAccessor> accessors = uniProtRESTAccessor.getByUniProtId("Q00955", "Q8WYK0");
+		//				Arrays	.asList("ADH", "ACSS")
+		//													.stream()
+		//													.flatMap(query -> uniProtRESTAccessor	.searchFor(query)
+		//																							.limit(1));
+		//		accessors.forEach(entityAccessor ->
+		//		{
+		//			List<Binding> bindings = entityAccessor.getBindings();
+		//			System.out.println(JSONHelper.prettyPrint(bindings));
+		//		});
 
-			System.out.println(json);
-		}
+		//System.out.println(JSONHelper.prettyPrint(codes));
+
 	}
 
 }

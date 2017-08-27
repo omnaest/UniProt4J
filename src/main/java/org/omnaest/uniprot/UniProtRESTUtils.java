@@ -33,7 +33,7 @@ public class UniProtRESTUtils
 
 	public static interface UniProtRawRESTAPIAccessor
 	{
-		public SearchResponse searchFor(String query);
+		public SearchResponse searchFor(String query, int offset, int limit);
 
 		public GetEntityResponse getEntity(String entityId);
 	}
@@ -51,11 +51,21 @@ public class UniProtRESTUtils
 			private RestClient restClient = new CachedRestClient(new XMLRestClient()).setCache(cache);
 
 			@Override
-			public SearchResponse searchFor(String query)
+			public SearchResponse searchFor(String query, int offset, int limit)
 			{
-				String url = "http://www.uniprot.org/uniprot/?query=" + query + "&sort=score&format=xml";
+				String url = "http://www.uniprot.org/uniprot";
+
+				String uri = this.restClient.urlBuilder()
+											.setBaseUrl(url)
+											.addQueryParameter("query", query)
+											.addQueryParameter("offset", "" + offset)
+											.addQueryParameter("limit", "" + limit)
+											.addQueryParameter("sort", "score")
+											.addQueryParameter("format", "xml")
+											.build();
+
 				LOG.info("Request url: " + url);
-				return this.restClient.requestGet(url, SearchResponse.class);
+				return this.restClient.requestGet(uri, SearchResponse.class);
 			}
 
 			@Override

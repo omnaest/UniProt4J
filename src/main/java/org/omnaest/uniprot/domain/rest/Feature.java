@@ -18,10 +18,17 @@
 */
 package org.omnaest.uniprot.domain.rest;
 
+import java.util.function.Predicate;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @XmlAccessorType(XmlAccessType.NONE)
 public class Feature
@@ -35,8 +42,45 @@ public class Feature
 	@XmlAttribute
 	private String evidence;
 
+	@XmlElement
+	private Location location;
+
 	@XmlAnyElement
 	private Object content;
+
+	public enum Type
+	{
+		METAL_BINDING_SITE("metal ion-binding site"), BINDING_SITE("binding site");
+
+		private Predicate<String> predicate;
+
+		private Type(String filter)
+		{
+			this.predicate = type -> StringUtils.containsIgnoreCase(type, filter);
+		}
+
+		public Predicate<String> getPredicate()
+		{
+			return this.predicate;
+		}
+	}
+
+	@JsonIgnore
+	public boolean isOfType(Type type)
+	{
+		return type	.getPredicate()
+					.test(this.type);
+	}
+
+	public Location getLocation()
+	{
+		return this.location;
+	}
+
+	public void setLocation(Location location)
+	{
+		this.location = location;
+	}
 
 	public String getType()
 	{
@@ -76,6 +120,19 @@ public class Feature
 	public void setContent(Object content)
 	{
 		this.content = content;
+	}
+
+	@JsonIgnore
+	public boolean isMarkedAsRemoved()
+	{
+		return StringUtils.equalsIgnoreCase(this.description, "Removed");
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Feature [type=" + this.type + ", description=" + this.description + ", evidence=" + this.evidence + ", location=" + this.location + ", content="
+				+ this.content + "]";
 	}
 
 }

@@ -16,22 +16,34 @@
 
 
 */
-package org.omnaest.uniprot;
+package org.omnaest.uniprot.domain;
 
-import org.junit.Test;
-import org.omnaest.uniprot.domain.rest.SearchResponse;
-import org.omnaest.utils.JSONHelper;
-
-public class UniProtRESTUtilsTest
+public class CodeAndPosition
 {
+	private char	code;
+	private int		position;
 
-	@Test
-	public void testSearchFor() throws Exception
+	public CodeAndPosition(char code, int position)
 	{
-		SearchResponse searchResponse = UniProtRESTUtils.getInstance()
-														.searchFor("ADH", 0, 1);
+		super();
+		this.code = code;
+		this.position = position;
+	}
 
-		System.out.println(JSONHelper.prettyPrint(searchResponse));
+	public char getCode()
+	{
+		return this.code;
+	}
+
+	public int getPosition()
+	{
+		return this.position;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "CodeAndPosition [code=" + this.code + ", position=" + this.position + "]";
 	}
 
 }
