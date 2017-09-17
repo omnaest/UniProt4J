@@ -20,6 +20,7 @@ package org.omnaest.uniprot;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,12 +40,12 @@ import org.omnaest.uniprot.domain.CodeAndPosition;
 import org.omnaest.uniprot.domain.MetalBinding;
 import org.omnaest.uniprot.domain.raw.Entry;
 import org.omnaest.uniprot.domain.raw.Feature;
+import org.omnaest.uniprot.domain.raw.Feature.Type;
 import org.omnaest.uniprot.domain.raw.GetEntityResponse;
 import org.omnaest.uniprot.domain.raw.Location;
 import org.omnaest.uniprot.domain.raw.Position;
 import org.omnaest.uniprot.domain.raw.SearchResponse;
 import org.omnaest.uniprot.domain.raw.Sequence;
-import org.omnaest.uniprot.domain.raw.Feature.Type;
 import org.omnaest.utils.StreamUtils;
 import org.omnaest.utils.cache.Cache;
 import org.omnaest.utils.cache.CacheUtils;
@@ -92,6 +93,10 @@ public class UniProtUtils
 		public Stream<EntityAccessor> getByUniProtId(String... ids);
 
 		public EntityAccessor getByUniProtId(String id);
+
+		UniProtRESTAccessor withDirectoryCache(File directory);
+
+		UniProtRESTAccessor withTempDirectoryCache();
 
 	}
 
@@ -152,6 +157,27 @@ public class UniProtUtils
 							LOG.error("Failed to create temp file cache", e);
 						}
 						return this;
+					}
+
+					@Override
+					public UniProtRESTAccessor withTempDirectoryCache()
+					{
+						try
+						{
+							this.withDirectoryCache(Files	.createTempDirectory("uniprotCache")
+															.toFile());
+						}
+						catch (IOException e)
+						{
+							LOG.error("Failed to create temp cache directory", e);
+						}
+						return this;
+					}
+
+					@Override
+					public UniProtRESTAccessor withDirectoryCache(File directory)
+					{
+						return this.withCache(CacheUtils.newJsonFolderCache(directory));
 					}
 
 					@Override
