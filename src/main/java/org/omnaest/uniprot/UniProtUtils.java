@@ -46,9 +46,9 @@ import org.omnaest.uniprot.domain.raw.Location;
 import org.omnaest.uniprot.domain.raw.Position;
 import org.omnaest.uniprot.domain.raw.SearchResponse;
 import org.omnaest.uniprot.domain.raw.Sequence;
+import org.omnaest.utils.CacheUtils;
 import org.omnaest.utils.StreamUtils;
 import org.omnaest.utils.cache.Cache;
-import org.omnaest.utils.cache.CacheUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
