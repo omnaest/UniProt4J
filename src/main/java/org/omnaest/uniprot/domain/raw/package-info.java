@@ -17,5 +17,9 @@
 	
 
 */
-@javax.xml.bind.annotation.XmlSchema(xmlns = { @javax.xml.bind.annotation.XmlNs(prefix = "", namespaceURI = "http://uniprot.org/uniprot") })
+@XmlSchema(namespace = "http://uniprot.org/uniprot", elementFormDefault = XmlNsForm.QUALIFIED, xmlns = { @XmlNs(prefix = "", namespaceURI = "http://uniprot.org/uniprot") })
 package org.omnaest.uniprot.domain.raw;
+
+import javax.xml.bind.annotation.XmlNs;
+import javax.xml.bind.annotation.XmlNsForm;
+import javax.xml.bind.annotation.XmlSchema;

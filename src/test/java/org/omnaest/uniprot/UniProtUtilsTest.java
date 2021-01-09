@@ -19,51 +19,109 @@
 package org.omnaest.uniprot;
 
 import java.io.File;
+import java.util.List;
 import java.util.stream.Stream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.omnaest.uniprot.UniProtUtils.EntityAccessor;
 import org.omnaest.uniprot.UniProtUtils.UniProtRESTAccessor;
+import org.omnaest.uniprot.domain.ActiveSite;
+import org.omnaest.uniprot.domain.Binding;
+import org.omnaest.uniprot.domain.ModifiedResidue;
+import org.omnaest.uniprot.domain.raw.Entry;
+import org.omnaest.uniprot.domain.raw.Feature;
 import org.omnaest.utils.JSONHelper;
 
 public class UniProtUtilsTest
 {
 
-	@Test
-	public void testGetInstance() throws Exception
-	{
-		UniProtRESTAccessor uniProtRESTAccessor = UniProtUtils	.getInstance()
-																.useRESTApi()
-																//.withSingleTempFileCache();
-																.withSingleFileCache(new File("C:/Temp/uniprot_cache.json"));
+    @Test
+    @Ignore
+    public void testGetInstance() throws Exception
+    {
+        UniProtRESTAccessor uniProtRESTAccessor = UniProtUtils.getInstance()
+                                                              .useRESTApi()
+                                                              //.withSingleTempFileCache();
+                                                              .withSingleFileCache(new File("C:/Temp/uniprot_cache2.json"));
 
-		//		String json = JSONHelper.prettyPrint(uniProtRESTAccessor.searchFor("ADH")
-		//																.limit(1)
-		//																.map(entity -> entity.get())
-		//																.collect(Collectors.toList()));
+        //		String json = JSONHelper.prettyPrint(uniProtRESTAccessor.searchFor("ADH")
+        //																.limit(1)
+        //																.map(entity -> entity.get())
+        //																.collect(Collectors.toList()));
 
-		uniProtRESTAccessor	.searchFor(t -> t.limit(20), "ACOT organism:\"homo sapiens\"")
-							.forEach(accessor ->
-							{
-								System.out.println(accessor	.get()
-															.getName());
-								System.out.println(JSONHelper.prettyPrint(accessor.getMetalBindings()));
-								System.out.println(JSONHelper.prettyPrint(accessor.getBindings()));
-							});
+        uniProtRESTAccessor.searchInHumanGenesFor("ACOT")
+                           .forEach(accessor ->
+                           {
+                               System.out.println(accessor.get()
+                                                          .getName());
+                               System.out.println(JSONHelper.prettyPrint(accessor.getMetalBindings()));
+                               System.out.println(JSONHelper.prettyPrint(accessor.getBindings()));
+                           });
 
-		Stream<EntityAccessor> accessors = uniProtRESTAccessor.getByUniProtId("Q00955", "Q8WYK0");
-		//				Arrays	.asList("ADH", "ACSS")
-		//													.stream()
-		//													.flatMap(query -> uniProtRESTAccessor	.searchFor(query)
-		//																							.limit(1));
-		//		accessors.forEach(entityAccessor ->
-		//		{
-		//			List<Binding> bindings = entityAccessor.getBindings();
-		//			System.out.println(JSONHelper.prettyPrint(bindings));
-		//		});
+        Stream<EntityAccessor> accessors = uniProtRESTAccessor.getByUniProtId("Q00955", "Q8WYK0");
+        //				Arrays	.asList("ADH", "ACSS")
+        //													.stream()
+        //													.flatMap(query -> uniProtRESTAccessor	.searchFor(query)
+        //																							.limit(1));
+        //		accessors.forEach(entityAccessor ->
+        //		{
+        //			List<Binding> bindings = entityAccessor.getBindings();
+        //			System.out.println(JSONHelper.prettyPrint(bindings));
+        //		});
 
-		//System.out.println(JSONHelper.prettyPrint(codes));
+        //System.out.println(JSONHelper.prettyPrint(codes));
 
-	}
+    }
+
+    @Test
+    @Ignore
+    public void testGetById() throws Exception
+    {
+        UniProtRESTAccessor uniProtRESTAccessor = UniProtUtils.getInstance()
+                                                              .useRESTApi()
+                                                              //                                                              .withSingleTempFileCache();
+                                                              .withSingleFileCache(new File("C:/Temp/uniprot_cache2.json"));
+
+        Entry entry = uniProtRESTAccessor.getByUniProtId("P11310")
+                                         .get();
+        List<Feature> features = entry.getFeatures();
+
+        System.out.println(JSONHelper.prettyPrint(features));
+
+    }
+
+    @Test
+    @Ignore
+    public void testGetVariants() throws Exception
+    {
+        UniProtRESTAccessor uniProtRESTAccessor = UniProtUtils.getInstance()
+                                                              .useRESTApi()
+                                                              .withLocalDirectoryCache();
+        //                                                              .withSingleTempFileCache();
+        //                                                              .withSingleFileCache(new File("C:/Temp/uniprot_cache2.json"));
+
+        EntityAccessor entityAccessor = uniProtRESTAccessor.getByUniProtId("P11310");
+        List<Binding> bindings = entityAccessor.getBindings();
+
+        List<ModifiedResidue> modifiedResidues = entityAccessor.getModifiedResidues();
+        List<ActiveSite> activeSite = entityAccessor.getActiveSites();
+
+        System.out.println(JSONHelper.prettyPrint(activeSite));
+        System.out.println(JSONHelper.prettyPrint(bindings));
+        System.out.println(JSONHelper.prettyPrint(activeSite));
+    }
+
+    @Test
+    @Ignore
+    public void testLoadGenesFromFTPWithCache()
+    {
+        UniProtUtils.getInstance()
+                    .useFTP()
+                    .withLocalDirectoryCache()
+                    .loadCurrentHumanProteome()
+                    .getGenes()
+                    .forEach(System.out::println);
+    }
 
 }

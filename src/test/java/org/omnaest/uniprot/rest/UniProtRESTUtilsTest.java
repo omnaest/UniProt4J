@@ -16,22 +16,25 @@
 
 
 */
-package org.omnaest.uniprot;
+package org.omnaest.uniprot.rest;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.omnaest.uniprot.domain.raw.SearchResponse;
+import org.omnaest.uniprot.rest.UniProtRESTUtils;
 import org.omnaest.utils.JSONHelper;
 
 public class UniProtRESTUtilsTest
 {
 
-	@Test
-	public void testSearchFor() throws Exception
-	{
-		SearchResponse searchResponse = UniProtRESTUtils.getInstance()
-														.searchFor("ADH", 0, 1);
+    @Test
+    @Ignore
+    public void testSearchFor() throws Exception
+    {
+        SearchResponse searchResponse = UniProtRESTUtils.getInstance()
+                                                        .searchFor("ADH", 0, 1);
 
-		System.out.println(JSONHelper.prettyPrint(searchResponse));
-	}
+        System.out.println(JSONHelper.prettyPrint(searchResponse));
+    }
 
 }

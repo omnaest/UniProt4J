@@ -19,15 +19,11 @@
 package org.omnaest.uniprot.domain;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
-public class Binding
+public class Binding extends PositionAnnotation
 {
 	private String			compound;
-	private String			description;
-	private List<Integer>	positions;
-
 	public Binding(String compound, String description, Collection<Integer> positions)
 	{
 		super();
@@ -41,16 +37,6 @@ public class Binding
 	public String getCompound()
 	{
 		return this.compound;
-	}
-
-	public String getDescription()
-	{
-		return this.description;
-	}
-
-	public List<Integer> getPositions()
-	{
-		return this.positions;
 	}
 
 	@Override

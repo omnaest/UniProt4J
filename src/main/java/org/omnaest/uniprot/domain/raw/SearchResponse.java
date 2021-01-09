@@ -30,17 +30,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.NONE)
 public class SearchResponse
 {
-	@XmlElement(name = "entry")
-	private List<Entry> entries = new ArrayList<>();
+    @XmlElement(name = "entry")
+    private List<Entry> entries = new ArrayList<>();
 
-	public List<Entry> getEntries()
-	{
-		return this.entries;
-	}
+    public List<Entry> getEntries()
+    {
+        return this.entries;
+    }
 
-	public void setEntries(List<Entry> entries)
-	{
-		this.entries = entries;
-	}
+    public void setEntries(List<Entry> entries)
+    {
+        this.entries = entries;
+    }
 
 }

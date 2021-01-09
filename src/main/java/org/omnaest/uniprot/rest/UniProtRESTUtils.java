@@ -16,14 +16,14 @@
 
 
 */
-package org.omnaest.uniprot;
+package org.omnaest.uniprot.rest;
 
 import org.omnaest.uniprot.domain.raw.GetEntityResponse;
 import org.omnaest.uniprot.domain.raw.SearchResponse;
 import org.omnaest.utils.cache.Cache;
-import org.omnaest.utils.rest.client.CachedRestClient;
 import org.omnaest.utils.rest.client.RestClient;
-import org.omnaest.utils.rest.client.XMLRestClient;
+import org.omnaest.utils.rest.client.internal.CachedRestClient;
+import org.omnaest.utils.rest.client.internal.XMLRestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

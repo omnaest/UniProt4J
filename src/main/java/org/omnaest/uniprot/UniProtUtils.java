@@ -31,13 +31,15 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import org.omnaest.uniprot.UniProtRESTUtils.UniProtRawRESTAPIAccessor;
+import org.omnaest.uniprot.domain.ActiveSite;
 import org.omnaest.uniprot.domain.Binding;
 import org.omnaest.uniprot.domain.CodeAndPosition;
 import org.omnaest.uniprot.domain.MetalBinding;
+import org.omnaest.uniprot.domain.ModifiedResidue;
 import org.omnaest.uniprot.domain.raw.Entry;
 import org.omnaest.uniprot.domain.raw.Feature;
 import org.omnaest.uniprot.domain.raw.Feature.Type;
@@ -46,6 +48,11 @@ import org.omnaest.uniprot.domain.raw.Location;
 import org.omnaest.uniprot.domain.raw.Position;
 import org.omnaest.uniprot.domain.raw.SearchResponse;
 import org.omnaest.uniprot.domain.raw.Sequence;
+import org.omnaest.uniprot.fasta.UniProtFastaUtils;
+import org.omnaest.uniprot.fasta.UniProtFastaUtils.UniprotFastaProteomeIndex;
+import org.omnaest.uniprot.ftp.UniProtFTPUtils;
+import org.omnaest.uniprot.rest.UniProtRESTUtils;
+import org.omnaest.uniprot.rest.UniProtRESTUtils.UniProtRawRESTAPIAccessor;
 import org.omnaest.utils.CacheUtils;
 import org.omnaest.utils.StreamUtils;
 import org.omnaest.utils.cache.Cache;
@@ -54,348 +61,503 @@ import org.slf4j.LoggerFactory;
 
 public class UniProtUtils
 {
-	private static final Logger LOG = LoggerFactory.getLogger(UniProtUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UniProtUtils.class);
 
-	public static interface UniProtLoader
-	{
-		public UniProtRESTAccessor useRESTApi();
-	}
+    public static interface UniProtLoader
+    {
+        public UniProtRESTAccessor useRESTApi();
 
-	public static interface UniProtRESTAccessor
-	{
-		/**
-		 * @see Cache
-		 * @param cache
-		 * @return
-		 */
-		public UniProtRESTAccessor withCache(Cache cache);
+        public UniProtFTPAccessor useFTP();
+    }
 
-		/**
-		 * @see #withCache(Cache)
-		 * @param file
-		 * @return
-		 */
-		public UniProtRESTAccessor withSingleFileCache(File file);
+    public static interface UniProtFTPAccessor
+    {
+        public UniprotFastaProteomeIndex loadCurrentHumanProteome();
 
-		/**
-		 * @see #withSingleFileCache(File)
-		 * @see File#createTempFile(String, String)
-		 * @return
-		 */
-		public UniProtRESTAccessor withSingleTempFileCache();
+        public UniProtFTPAccessor withCache(Cache cache);
 
-		public Stream<EntityAccessor> searchFor(String... querys);
+        public UniProtFTPAccessor withLocalDirectoryCache();
 
-		public Stream<EntityAccessor> searchFor(UnaryOperator<Stream<EntityAccessor>> partialSearchModifier, String... querys);
+        public UniProtFTPAccessor withDirectoryCache(File directory);
+    }
 
-		public Stream<EntityAccessor> searchFor(String query);
+    public static interface UniProtRESTAccessor
+    {
+        /**
+         * @see Cache
+         * @param cache
+         * @return
+         */
+        public UniProtRESTAccessor withCache(Cache cache);
 
-		public Stream<EntityAccessor> getByUniProtId(String... ids);
+        /**
+         * @see #withCache(Cache)
+         * @param file
+         * @return
+         */
+        public UniProtRESTAccessor withSingleFileCache(File file);
 
-		public EntityAccessor getByUniProtId(String id);
+        /**
+         * @see #withSingleFileCache(File)
+         * @see File#createTempFile(String, String)
+         * @return
+         */
+        public UniProtRESTAccessor withSingleTempFileCache();
 
-		UniProtRESTAccessor withDirectoryCache(File directory);
+        public Stream<EntityAccessor> searchFor(String... querys);
 
-		UniProtRESTAccessor withTempDirectoryCache();
+        public Stream<EntityAccessor> searchInHumanGenesFor(String... querys);
 
-	}
+        public Stream<EntityAccessor> searchFor(UnaryOperator<Stream<EntityAccessor>> partialSearchModifier, String... querys);
 
-	public static interface EntityAccessor
-	{
-		public Entry get();
+        public Stream<EntityAccessor> searchFor(String query);
 
-		public List<MetalBinding> getMetalBindings();
+        public Stream<EntityAccessor> getByUniProtId(String... ids);
 
-		public List<Binding> getBindings();
+        public EntityAccessor getByUniProtId(String id);
 
-		public SequenceAccessor getSequence();
-	}
+        public UniProtRESTAccessor withDirectoryCache(File directory);
 
-	public static interface SequenceAccessor
-	{
-		boolean hasSequence();
+        public UniProtRESTAccessor withTempDirectoryCache();
 
-		public String get();
+        public UniProtRESTAccessor withLocalDirectoryCache();
 
-		public Stream<CodeAndPosition> getAsStream();
-	}
+    }
 
-	public static UniProtLoader getInstance()
-	{
-		return new UniProtLoader()
-		{
+    public static interface EntityAccessor
+    {
+        public Entry get();
 
-			@Override
-			public UniProtRESTAccessor useRESTApi()
-			{
-				return new UniProtRESTAccessor()
-				{
-					private Cache cache = CacheUtils.newConcurrentInMemoryCache();
+        public List<MetalBinding> getMetalBindings();
 
-					@Override
-					public UniProtRESTAccessor withCache(Cache cache)
-					{
-						this.cache = cache;
-						return this;
-					}
+        public List<Binding> getBindings();
 
-					@Override
-					public UniProtRESTAccessor withSingleFileCache(File file)
-					{
-						return this.withCache(CacheUtils.newJsonFileCache(file));
-					}
+        public List<ModifiedResidue> getModifiedResidues();
 
-					@Override
-					public UniProtRESTAccessor withSingleTempFileCache()
-					{
-						try
-						{
-							this.withSingleFileCache(File.createTempFile("uniprotCache", "json"));
-						}
-						catch (IOException e)
-						{
-							LOG.error("Failed to create temp file cache", e);
-						}
-						return this;
-					}
+        public SequenceAccessor getSequence();
 
-					@Override
-					public UniProtRESTAccessor withTempDirectoryCache()
-					{
-						try
-						{
-							this.withDirectoryCache(Files	.createTempDirectory("uniprotCache")
-															.toFile());
-						}
-						catch (IOException e)
-						{
-							LOG.error("Failed to create temp cache directory", e);
-						}
-						return this;
-					}
+        List<ActiveSite> getActiveSites();
 
-					@Override
-					public UniProtRESTAccessor withDirectoryCache(File directory)
-					{
-						return this.withCache(CacheUtils.newJsonFolderCache(directory));
-					}
+    }
 
-					@Override
-					public Stream<EntityAccessor> searchFor(String query)
-					{
-						return StreamUtils	.fromSupplier(new Supplier<List<EntityAccessor>>()
-						{
-							private int	limit	= 25;
-							private int	offset	= 0;
+    public static interface SequenceAccessor
+    {
+        boolean hasSequence();
 
-							@Override
-							public List<EntityAccessor> get()
-							{
-								return searchFor(query, this.getAndIncrementOffset(), this.limit);
-							}
+        public String get();
 
-							private int getAndIncrementOffset()
-							{
-								int retval = this.offset;
-								this.offset += this.limit;
-								return retval;
-							}
-						}, (result) -> result == null || result.isEmpty())
-											.flatMap(batch -> batch.stream());
-					}
+        public Stream<CodeAndPosition> getAsStream();
+    }
 
-					@Override
-					public Stream<EntityAccessor> searchFor(String... querys)
-					{
-						return this.searchFor(s -> s, querys);
-					}
+    public static UniProtLoader getInstance()
+    {
+        return new UniProtLoader()
+        {
 
-					@Override
-					public Stream<EntityAccessor> searchFor(UnaryOperator<Stream<EntityAccessor>> partialSearchModifier, String... querys)
-					{
-						return StreamUtils.concat(Arrays.asList(querys)
-														.stream()
-														.map(this::searchFor)
-														.map(accessors -> partialSearchModifier.apply(accessors)));
-					}
+            @Override
+            public UniProtRESTAccessor useRESTApi()
+            {
+                return new UniProtRESTAccessor()
+                {
+                    private Cache cache = CacheUtils.newConcurrentInMemoryCache();
 
-					public List<EntityAccessor> searchFor(String query, int offset, int limit)
-					{
-						SearchResponse searchResponse = this.getRestAPIAccessorInstance()
-															.searchFor(query, offset, limit);
+                    @Override
+                    public UniProtRESTAccessor withCache(Cache cache)
+                    {
+                        this.cache = cache;
+                        return this;
+                    }
 
-						return (searchResponse == null ? Collections.<Entry>emptyList() : searchResponse.getEntries())	.stream()
-																														.map(entry -> this.createEntityAccessor(entry))
-																														.collect(Collectors.toList());
-					}
+                    @Override
+                    public UniProtRESTAccessor withSingleFileCache(File file)
+                    {
+                        return this.withCache(CacheUtils.newJsonFileCache(file));
+                    }
 
-					private UniProtRawRESTAPIAccessor getRestAPIAccessorInstance()
-					{
-						return UniProtRESTUtils.getInstance(this.cache);
-					}
+                    @Override
+                    public UniProtRESTAccessor withSingleTempFileCache()
+                    {
+                        try
+                        {
+                            this.withSingleFileCache(File.createTempFile("cache/uniprotCache", "json"));
+                        }
+                        catch (IOException e)
+                        {
+                            LOG.error("Failed to create temp file cache", e);
+                        }
+                        return this;
+                    }
 
-					private EntityAccessor createEntityAccessor(Entry entry)
-					{
-						return new EntityAccessor()
-						{
-							@Override
-							public Entry get()
-							{
-								return entry;
-							}
+                    @Override
+                    public UniProtRESTAccessor withTempDirectoryCache()
+                    {
+                        try
+                        {
+                            this.withDirectoryCache(Files.createTempDirectory("cache/uniprotCache")
+                                                         .toFile());
+                        }
+                        catch (IOException e)
+                        {
+                            LOG.error("Failed to create temp cache directory", e);
+                        }
+                        return this;
+                    }
 
-							@Override
-							public List<MetalBinding> getMetalBindings()
-							{
-								return this	.get()
-											.getFeatures()
-											.stream()
-											.filter(feature -> !feature.isMarkedAsRemoved())
-											.filter(feature -> feature.isOfType(Type.METAL_BINDING_SITE))
-											.map(feature ->
-											{
-												int positionValue = this.determinePositionValue(feature);
-												String metalAndType = feature.getDescription();
-												String[] tokens = StringUtils.split(metalAndType, ";");
-												String metal = tokens.length >= 1 ? tokens[0].trim() : "";
-												String type = tokens.length >= 2 ? tokens[1].trim() : "";
-												return new MetalBinding(metal, type, Arrays	.asList(positionValue)
-																							.stream()
-																							.filter(value -> value >= 0)
-																							.collect(Collectors.toList()));
-											})
-											.collect(Collectors.groupingBy(metalBinding -> Arrays.asList(metalBinding.getMetal(), metalBinding.getType())))
-											.entrySet()
-											.stream()
-											.map(entry -> new MetalBinding(	entry	.getKey()
-																					.get(0),
-																			entry	.getKey()
-																					.get(1),
-																			entry	.getValue()
-																					.stream()
-																					.flatMap(binding -> binding	.getPositions()
-																												.stream())
-																					.collect(Collectors.toSet())))
-											.collect(Collectors.toList());
-							}
+                    @Override
+                    public UniProtRESTAccessor withDirectoryCache(File directory)
+                    {
+                        return this.withCache(CacheUtils.newJsonFolderCache(directory));
+                    }
 
-							@Override
-							public SequenceAccessor getSequence()
-							{
-								Sequence sequence = this.get()
-														.getSequence();
-								return new SequenceAccessor()
-								{
+                    @Override
+                    public UniProtRESTAccessor withLocalDirectoryCache()
+                    {
+                        return this.withDirectoryCache(new File("cache/uniprot/rest"));
+                    }
 
-									@Override
-									public Stream<CodeAndPosition> getAsStream()
-									{
-										int length = NumberUtils.toInt(sequence.getLength(), -1);
+                    @Override
+                    public Stream<EntityAccessor> searchFor(String query)
+                    {
+                        return StreamUtils.fromSupplier(new Supplier<List<EntityAccessor>>()
+                        {
+                            private int limit  = 25;
+                            private int offset = 0;
 
-										AtomicInteger position = new AtomicInteger();
-										Pattern codePattern = Pattern.compile("[a-zA-Z0-9]");
-										List<CodeAndPosition> retval = Arrays	.asList(ArrayUtils.toObject(this.get()
-																												.toCharArray()))
-																				.stream()
-																				.filter(code -> codePattern	.matcher(String.valueOf(code))
-																											.matches())
-																				.map(code -> new CodeAndPosition(code, position.getAndIncrement()))
-																				.collect(Collectors.toList());
+                            @Override
+                            public List<EntityAccessor> get()
+                            {
+                                return searchFor(query, this.getAndIncrementOffset(), this.limit);
+                            }
 
-										if (position.get() != length)
-										{
-											throw new IllegalStateException("Sequence length differs to actual sequence code: " + length + " != "
-													+ position.get());
-										}
+                            private int getAndIncrementOffset()
+                            {
+                                int retval = this.offset;
+                                this.offset += this.limit;
+                                return retval;
+                            }
+                        }, (result) -> result == null || result.isEmpty())
+                                          .flatMap(batch -> batch.stream());
+                    }
 
-										return retval.stream();
-									}
+                    @Override
+                    public Stream<EntityAccessor> searchFor(String... queries)
+                    {
+                        return this.searchFor(s -> s, queries);
+                    }
 
-									@Override
-									public String get()
-									{
-										return sequence.getValue();
-									}
+                    @Override
+                    public Stream<EntityAccessor> searchInHumanGenesFor(String... queries)
+                    {
+                        return this.searchFor(Arrays.asList(queries)
+                                                    .stream()
+                                                    .map(query -> query + " organism:\"homo sapiens\"")
+                                                    .collect(Collectors.toList())
+                                                    .toArray(new String[0]));
+                    }
 
-									@Override
-									public boolean hasSequence()
-									{
-										return StringUtils.isNotBlank(this.get());
-									}
+                    @Override
+                    public Stream<EntityAccessor> searchFor(UnaryOperator<Stream<EntityAccessor>> partialSearchModifier, String... queries)
+                    {
+                        return StreamUtils.concat(Arrays.asList(queries)
+                                                        .stream()
+                                                        .map(this::searchFor)
+                                                        .map(accessors -> partialSearchModifier.apply(accessors)));
+                    }
 
-								};
-							}
+                    public List<EntityAccessor> searchFor(String query, int offset, int limit)
+                    {
+                        SearchResponse searchResponse = this.getRestAPIAccessorInstance()
+                                                            .searchFor(query, offset, limit);
 
-							@Override
-							public List<Binding> getBindings()
-							{
-								return this	.get()
-											.getFeatures()
-											.stream()
-											.filter(feature -> !feature.isMarkedAsRemoved())
-											.filter(feature -> feature.isOfType(Type.BINDING_SITE))
-											.map(feature ->
-											{
-												int positionValue = this.determinePositionValue(feature);
-												String compoundAndDescription = feature.getDescription();
-												String[] tokens = StringUtils.split(compoundAndDescription, ";");
-												String compound = tokens.length >= 1 ? tokens[0].trim() : "";
-												String description = tokens.length >= 2 ? tokens[1].trim() : "";
-												return new Binding(compound, description, Arrays.asList(positionValue)
-																								.stream()
-																								.filter(value -> value >= 0)
-																								.collect(Collectors.toList()));
-											})
-											.collect(Collectors.groupingBy(metalBinding -> Arrays.asList(	metalBinding.getCompound(),
-																											metalBinding.getDescription())))
-											.entrySet()
-											.stream()
-											.map(entry -> new Binding(	entry	.getKey()
-																				.get(0),
-																		entry	.getKey()
-																				.get(1),
-																		entry	.getValue()
-																				.stream()
-																				.flatMap(binding -> binding	.getPositions()
-																											.stream())
-																				.collect(Collectors.toSet())))
-											.collect(Collectors.toList());
-							}
+                        return (searchResponse == null ? Collections.<Entry>emptyList() : searchResponse.getEntries()).stream()
+                                                                                                                      .map(entry -> this.createEntityAccessor(entry))
+                                                                                                                      .collect(Collectors.toList());
+                    }
 
-							private int determinePositionValue(Feature feature)
-							{
-								return NumberUtils.toInt(((Supplier<String>) () ->
-								{
-									Location location = feature.getLocation();
-									Position position = location != null ? location.getPosition() : null;
-									return position != null ? position.getPosition() : null;
-								}).get(), -1);
-							}
+                    private UniProtRawRESTAPIAccessor getRestAPIAccessorInstance()
+                    {
+                        return UniProtRESTUtils.getInstance(this.cache);
+                    }
 
-						};
-					}
+                    private EntityAccessor createEntityAccessor(Entry entry)
+                    {
+                        return new EntityAccessor()
+                        {
+                            @Override
+                            public Entry get()
+                            {
+                                return entry;
+                            }
 
-					@Override
-					public EntityAccessor getByUniProtId(String id)
-					{
-						GetEntityResponse response = this	.getRestAPIAccessorInstance()
-															.getEntity(id);
-						return response == null ? null : this.createEntityAccessor(response	.getEntries()
-																							.stream()
-																							.findFirst()
-																							.get());
-					}
+                            @Override
+                            public List<MetalBinding> getMetalBindings()
+                            {
+                                return this.get()
+                                           .getFeatures()
+                                           .stream()
+                                           .filter(feature -> !feature.isMarkedAsRemoved())
+                                           .filter(feature -> feature.isOfType(Type.METAL_BINDING_SITE))
+                                           .map(feature ->
+                                           {
+                                               int positionValue = this.determinePositionValue(feature);
+                                               String metalAndType = feature.getDescription();
+                                               String[] tokens = StringUtils.split(metalAndType, ";");
+                                               String metal = tokens.length >= 1 ? tokens[0].trim() : "";
+                                               String type = tokens.length >= 2 ? tokens[1].trim() : "";
+                                               return new MetalBinding(metal, type, Arrays.asList(positionValue)
+                                                                                          .stream()
+                                                                                          .filter(value -> value >= 0)
+                                                                                          .collect(Collectors.toList()));
+                                           })
+                                           .collect(Collectors.groupingBy(metalBinding -> Arrays.asList(metalBinding.getMetal(), metalBinding.getType())))
+                                           .entrySet()
+                                           .stream()
+                                           .map(entry -> new MetalBinding(entry.getKey()
+                                                                               .get(0),
+                                                                          entry.getKey()
+                                                                               .get(1),
+                                                                          entry.getValue()
+                                                                               .stream()
+                                                                               .flatMap(binding -> binding.getPositions()
+                                                                                                          .stream())
+                                                                               .collect(Collectors.toSet())))
+                                           .collect(Collectors.toList());
+                            }
 
-					@Override
-					public Stream<EntityAccessor> getByUniProtId(String... ids)
-					{
-						return StreamUtils.concat(Arrays.asList(ids)
-														.stream()
-														.map(id -> Stream.of(this.getByUniProtId(id))));
-					}
+                            @Override
+                            public SequenceAccessor getSequence()
+                            {
+                                Sequence sequence = this.get()
+                                                        .getSequence();
+                                return new SequenceAccessor()
+                                {
 
-				};
-			}
-		};
-	}
+                                    @Override
+                                    public Stream<CodeAndPosition> getAsStream()
+                                    {
+                                        int length = NumberUtils.toInt(sequence.getLength(), -1);
+
+                                        AtomicInteger position = new AtomicInteger();
+                                        Pattern codePattern = Pattern.compile("[a-zA-Z0-9]");
+                                        List<CodeAndPosition> retval = Arrays.asList(ArrayUtils.toObject(this.get()
+                                                                                                             .toCharArray()))
+                                                                             .stream()
+                                                                             .filter(code -> codePattern.matcher(String.valueOf(code))
+                                                                                                        .matches())
+                                                                             .map(code -> new CodeAndPosition(code, position.getAndIncrement()))
+                                                                             .collect(Collectors.toList());
+
+                                        if (position.get() != length)
+                                        {
+                                            throw new IllegalStateException("Sequence length differs to actual sequence code: " + length + " != "
+                                                    + position.get());
+                                        }
+
+                                        return retval.stream();
+                                    }
+
+                                    @Override
+                                    public String get()
+                                    {
+                                        return sequence.getValue();
+                                    }
+
+                                    @Override
+                                    public boolean hasSequence()
+                                    {
+                                        return StringUtils.isNotBlank(this.get());
+                                    }
+
+                                };
+                            }
+
+                            @Override
+                            public List<Binding> getBindings()
+                            {
+                                return this.get()
+                                           .getFeatures()
+                                           .stream()
+                                           .filter(feature -> !feature.isMarkedAsRemoved())
+                                           .filter(feature -> feature.isOfType(Type.BINDING_SITE))
+                                           .map(feature ->
+                                           {
+                                               int positionValue = this.determinePositionValue(feature);
+                                               String compoundAndDescription = feature.getDescription();
+                                               String[] tokens = StringUtils.split(compoundAndDescription, ";");
+                                               String compound = tokens.length >= 1 ? tokens[0].trim() : "";
+                                               String description = tokens.length >= 2 ? tokens[1].trim() : "";
+                                               return new Binding(compound, description, Arrays.asList(positionValue)
+                                                                                               .stream()
+                                                                                               .filter(value -> value >= 0)
+                                                                                               .collect(Collectors.toList()));
+                                           })
+                                           .collect(Collectors.groupingBy(metalBinding -> Arrays.asList(metalBinding.getCompound(),
+                                                                                                        metalBinding.getDescription())))
+                                           .entrySet()
+                                           .stream()
+                                           .map(entry -> new Binding(entry.getKey()
+                                                                          .get(0),
+                                                                     entry.getKey()
+                                                                          .get(1),
+                                                                     entry.getValue()
+                                                                          .stream()
+                                                                          .flatMap(binding -> binding.getPositions()
+                                                                                                     .stream())
+                                                                          .collect(Collectors.toSet())))
+                                           .collect(Collectors.toList());
+                            }
+
+                            @Override
+                            public List<ActiveSite> getActiveSites()
+                            {
+                                return this.get()
+                                           .getFeatures()
+                                           .stream()
+                                           .filter(feature -> !feature.isMarkedAsRemoved())
+                                           .filter(feature -> feature.isOfType(Type.ACTIVE_SITE))
+                                           .map(feature ->
+                                           {
+                                               int positionValue = this.determinePositionValue(feature);
+                                               String compoundAndDescription = feature.getDescription();
+                                               String[] tokens = StringUtils.split(compoundAndDescription, ";");
+                                               String compound = tokens.length >= 1 ? tokens[0].trim() : "";
+                                               String description = tokens.length >= 2 ? tokens[1].trim() : "";
+                                               return new ActiveSite(compound, description, Arrays.asList(positionValue)
+                                                                                                  .stream()
+                                                                                                  .filter(value -> value >= 0)
+                                                                                                  .collect(Collectors.toList()));
+                                           })
+                                           .collect(Collectors.groupingBy(binding -> Arrays.asList(binding.getCompound(), binding.getDescription())))
+                                           .entrySet()
+                                           .stream()
+                                           .map(entry -> new ActiveSite(entry.getKey()
+                                                                             .get(0),
+                                                                        entry.getKey()
+                                                                             .get(1),
+                                                                        entry.getValue()
+                                                                             .stream()
+                                                                             .flatMap(binding -> binding.getPositions()
+                                                                                                        .stream())
+                                                                             .collect(Collectors.toSet())))
+                                           .collect(Collectors.toList());
+                            }
+
+                            @Override
+                            public List<ModifiedResidue> getModifiedResidues()
+                            {
+                                return this.get()
+                                           .getFeatures()
+                                           .stream()
+                                           .filter(feature -> !feature.isMarkedAsRemoved())
+                                           .filter(feature -> feature.isOfType(Type.MODIFIED_RESIDUE))
+                                           .map(feature ->
+                                           {
+                                               int positionValue = this.determinePositionValue(feature);
+                                               String compoundAndDescription = feature.getDescription();
+                                               String[] tokens = StringUtils.split(compoundAndDescription, ";");
+                                               String compound = tokens.length >= 1 ? tokens[0].trim() : "";
+                                               String description = tokens.length >= 2 ? tokens[1].trim() : "";
+                                               return new ModifiedResidue(compound, description, Arrays.asList(positionValue)
+                                                                                                       .stream()
+                                                                                                       .filter(value -> value >= 0)
+                                                                                                       .collect(Collectors.toList()));
+                                           })
+                                           .collect(Collectors.groupingBy(residue -> Arrays.asList(residue.getCompound(), residue.getDescription())))
+                                           .entrySet()
+                                           .stream()
+                                           .map(entry -> new ModifiedResidue(entry.getKey()
+                                                                                  .get(0),
+                                                                             entry.getKey()
+                                                                                  .get(1),
+                                                                             entry.getValue()
+                                                                                  .stream()
+                                                                                  .flatMap(binding -> binding.getPositions()
+                                                                                                             .stream())
+                                                                                  .collect(Collectors.toSet())))
+                                           .collect(Collectors.toList());
+
+                            }
+
+                            private int determinePositionValue(Feature feature)
+                            {
+                                return NumberUtils.toInt(((Supplier<String>) () ->
+                                {
+                                    Location location = feature.getLocation();
+                                    Position position = location != null ? location.getPosition() : null;
+                                    return position != null ? position.getPosition() : null;
+                                }).get(), -1);
+                            }
+
+                        };
+                    }
+
+                    @Override
+                    public EntityAccessor getByUniProtId(String id)
+                    {
+                        GetEntityResponse response = this.getRestAPIAccessorInstance()
+                                                         .getEntity(id);
+                        return response == null ? null
+                                : this.createEntityAccessor(response.getEntries()
+                                                                    .stream()
+                                                                    .findFirst()
+                                                                    .get());
+                    }
+
+                    @Override
+                    public Stream<EntityAccessor> getByUniProtId(String... ids)
+                    {
+                        return StreamUtils.concat(Arrays.asList(ids)
+                                                        .stream()
+                                                        .map(id -> Stream.of(this.getByUniProtId(id))));
+                    }
+
+                };
+            }
+
+            @Override
+            public UniProtFTPAccessor useFTP()
+            {
+                return new UniProtFTPAccessor()
+                {
+                    private Cache cache;
+
+                    @Override
+                    public UniProtFTPAccessor withLocalDirectoryCache()
+                    {
+                        return this.withDirectoryCache(new File("cache/uniprot/ftp"));
+                    }
+
+                    @Override
+                    public UniProtFTPAccessor withDirectoryCache(File directory)
+                    {
+                        return this.withCache(CacheUtils.newJsonFolderCache(directory));
+                    }
+
+                    @Override
+                    public UniProtFTPAccessor withCache(Cache cache)
+                    {
+                        this.cache = cache;
+                        return this;
+                    }
+
+                    @Override
+                    public UniprotFastaProteomeIndex loadCurrentHumanProteome()
+                    {
+                        return UniProtFastaUtils.loadFastaProteome()
+                                                .from(this.cache.computeIfAbsent("HumanProteomeCurrent", () ->
+                                                {
+                                                    try
+                                                    {
+                                                        return IOUtils.toByteArray(UniProtFTPUtils.loadCurrentHumanProteomeFasta());
+                                                    }
+                                                    catch (IOException e)
+                                                    {
+                                                        throw new IllegalStateException(e);
+                                                    }
+                                                }, byte[].class));
+                    }
+                };
+            }
+        };
+    }
 }

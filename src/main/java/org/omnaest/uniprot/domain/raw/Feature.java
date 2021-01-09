@@ -33,106 +33,106 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @XmlAccessorType(XmlAccessType.NONE)
 public class Feature
 {
-	@XmlAttribute
-	private String type;
+    @XmlAttribute
+    private String type;
 
-	@XmlAttribute
-	private String description;
+    @XmlAttribute
+    private String description;
 
-	@XmlAttribute
-	private String evidence;
+    @XmlAttribute
+    private String evidence;
 
-	@XmlElement
-	private Location location;
+    @XmlElement
+    private Location location;
 
-	@XmlAnyElement
-	private Object content;
+    @XmlAnyElement
+    private Object content;
 
-	public enum Type
-	{
-		METAL_BINDING_SITE("metal ion-binding site"), BINDING_SITE("binding site");
+    public enum Type
+    {
+        METAL_BINDING_SITE("metal ion-binding site"), BINDING_SITE("binding site"), MODIFIED_RESIDUE("modified residue"), ACTIVE_SITE("active site");
 
-		private Predicate<String> predicate;
+        private Predicate<String> predicate;
 
-		private Type(String filter)
-		{
-			this.predicate = type -> StringUtils.containsIgnoreCase(type, filter);
-		}
+        private Type(String filter)
+        {
+            this.predicate = type -> StringUtils.containsIgnoreCase(type, filter);
+        }
 
-		public Predicate<String> getPredicate()
-		{
-			return this.predicate;
-		}
-	}
+        public Predicate<String> getPredicate()
+        {
+            return this.predicate;
+        }
+    }
 
-	@JsonIgnore
-	public boolean isOfType(Type type)
-	{
-		return type	.getPredicate()
-					.test(this.type);
-	}
+    @JsonIgnore
+    public boolean isOfType(Type type)
+    {
+        return type.getPredicate()
+                   .test(this.type);
+    }
 
-	public Location getLocation()
-	{
-		return this.location;
-	}
+    public Location getLocation()
+    {
+        return this.location;
+    }
 
-	public void setLocation(Location location)
-	{
-		this.location = location;
-	}
+    public void setLocation(Location location)
+    {
+        this.location = location;
+    }
 
-	public String getType()
-	{
-		return this.type;
-	}
+    public String getType()
+    {
+        return this.type;
+    }
 
-	public void setType(String type)
-	{
-		this.type = type;
-	}
+    public void setType(String type)
+    {
+        this.type = type;
+    }
 
-	public String getDescription()
-	{
-		return this.description;
-	}
+    public String getDescription()
+    {
+        return this.description;
+    }
 
-	public void setDescription(String description)
-	{
-		this.description = description;
-	}
+    public void setDescription(String description)
+    {
+        this.description = description;
+    }
 
-	public String getEvidence()
-	{
-		return this.evidence;
-	}
+    public String getEvidence()
+    {
+        return this.evidence;
+    }
 
-	public void setEvidence(String evidence)
-	{
-		this.evidence = evidence;
-	}
+    public void setEvidence(String evidence)
+    {
+        this.evidence = evidence;
+    }
 
-	public Object getContent()
-	{
-		return this.content;
-	}
+    public Object getContent()
+    {
+        return this.content;
+    }
 
-	public void setContent(Object content)
-	{
-		this.content = content;
-	}
+    public void setContent(Object content)
+    {
+        this.content = content;
+    }
 
-	@JsonIgnore
-	public boolean isMarkedAsRemoved()
-	{
-		return StringUtils.equalsIgnoreCase(this.description, "Removed");
-	}
+    @JsonIgnore
+    public boolean isMarkedAsRemoved()
+    {
+        return StringUtils.equalsIgnoreCase(this.description, "Removed");
+    }
 
-	@Override
-	public String toString()
-	{
-		return "Feature [type=" + this.type + ", description=" + this.description + ", evidence=" + this.evidence + ", location=" + this.location + ", content="
-				+ this.content + "]";
-	}
+    @Override
+    public String toString()
+    {
+        return "Feature [type=" + this.type + ", description=" + this.description + ", evidence=" + this.evidence + ", location=" + this.location + ", content="
+                + this.content + "]";
+    }
 
 }
