@@ -24,13 +24,11 @@ import java.util.stream.Stream;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.omnaest.genomics.uniprot.UniProtUtils;
 import org.omnaest.genomics.uniprot.UniProtUtils.EntityAccessor;
 import org.omnaest.genomics.uniprot.UniProtUtils.UniProtRESTAccessor;
 import org.omnaest.genomics.uniprot.domain.ActiveSite;
 import org.omnaest.genomics.uniprot.domain.Binding;
 import org.omnaest.genomics.uniprot.domain.ModifiedResidue;
-import org.omnaest.genomics.uniprot.domain.raw.Entry;
 import org.omnaest.genomics.uniprot.domain.raw.Feature;
 import org.omnaest.utils.JSONHelper;
 
@@ -79,14 +77,12 @@ public class UniProtUtilsTest
     @Ignore
     public void testGetById() throws Exception
     {
-        UniProtRESTAccessor uniProtRESTAccessor = UniProtUtils.getInstance()
-                                                              .useRESTApi()
-                                                              //                                                              .withSingleTempFileCache();
-                                                              .withSingleFileCache(new File("C:/Temp/uniprot_cache2.json"));
-
-        Entry entry = uniProtRESTAccessor.getByUniProtId("P11310")
-                                         .get();
-        List<Feature> features = entry.getFeatures();
+        List<Feature> features = UniProtUtils.getInstance()
+                                             .useRESTApi()
+                                             .withSingleTempFileCache()
+                                             .getByUniProtId("P11310")
+                                             .get()
+                                             .getFeatures();
 
         System.out.println(JSONHelper.prettyPrint(features));
 
