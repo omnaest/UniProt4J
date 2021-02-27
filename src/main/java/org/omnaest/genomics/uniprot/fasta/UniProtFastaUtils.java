@@ -126,6 +126,7 @@ public class UniProtFastaUtils
                 Map<String, UniprotProteinBuilder> uniprotIdToProtein = this.buildIndex(inputStream);
                 Map<String, List<UniprotProteinBuilder>> geneToProtein = uniprotIdToProtein.values()
                                                                                            .stream()
+                                                                                           .filter(protein -> StringUtils.isNotBlank(protein.getGene()))
                                                                                            .filter(protein -> !StringUtils.equals(protein.getGene(), "-"))
                                                                                            .collect(Collectors.groupingBy(UniprotProtein::getGene));
 

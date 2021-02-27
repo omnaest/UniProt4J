@@ -20,7 +20,7 @@ public class UniProtFTPUtils
                            .fromGzip(FTPUtils.load()
                                              .withAnonymousCredentials()
                                              .from("ftp.uniprot.org",
-                                                   "/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640_9606.fasta.gz")
+                                                   "/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640/UP000005640_9606.fasta.gz")
                                              .get()
                                              .asInputStream())
                            .asInputStream();
@@ -39,7 +39,7 @@ public class UniProtFTPUtils
                            .fromGzip(FTPUtils.load()
                                              .withAnonymousCredentials()
                                              .from("ftp.uniprot.org",
-                                                   "pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640_9606_DNA.fasta.gz")
+                                                   "pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640/UP000005640_9606_DNA.fasta.gz")
                                              .get()
                                              .asInputStream())
                            .asInputStream();
