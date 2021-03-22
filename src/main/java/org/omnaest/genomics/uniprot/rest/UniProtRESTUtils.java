@@ -44,51 +44,51 @@ import org.slf4j.LoggerFactory;
 
 public class UniProtRESTUtils
 {
-	private static final Logger LOG = LoggerFactory.getLogger(UniProtRESTUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UniProtRESTUtils.class);
 
-	public static interface UniProtRawRESTAPIAccessor
-	{
-		public SearchResponse searchFor(String query, int offset, int limit);
+    public static interface UniProtRawRESTAPIAccessor
+    {
+        public SearchResponse searchFor(String query, int offset, int limit);
 
-		public GetEntityResponse getEntity(String entityId);
-	}
+        public GetEntityResponse getEntity(String entityId);
+    }
 
-	public static UniProtRawRESTAPIAccessor getInstance()
-	{
-		Cache cache = null;
-		return getInstance(cache);
-	}
+    public static UniProtRawRESTAPIAccessor getInstance()
+    {
+        Cache cache = null;
+        return getInstance(cache);
+    }
 
-	public static UniProtRawRESTAPIAccessor getInstance(Cache cache)
-	{
-		return new UniProtRawRESTAPIAccessor()
-		{
-			private RestClient restClient = new CachedRestClient(new XMLRestClient()).setCache(cache);
+    public static UniProtRawRESTAPIAccessor getInstance(Cache cache)
+    {
+        return new UniProtRawRESTAPIAccessor()
+        {
+            private RestClient restClient = new CachedRestClient(new XMLRestClient()).setCache(cache);
 
-			@Override
-			public SearchResponse searchFor(String query, int offset, int limit)
-			{
-				String url = this.restClient.urlBuilder()
-											.setBaseUrl("http://www.uniprot.org/uniprot")
-											.addQueryParameter("query", query)
-											.addQueryParameter("offset", "" + offset)
-											.addQueryParameter("limit", "" + limit)
-											.addQueryParameter("sort", "score")
-											.addQueryParameter("format", "xml")
-											.build();
+            @Override
+            public SearchResponse searchFor(String query, int offset, int limit)
+            {
+                String url = RestClient.urlBuilder()
+                                       .setBaseUrl("http://www.uniprot.org/uniprot")
+                                       .addQueryParameter("query", query)
+                                       .addQueryParameter("offset", "" + offset)
+                                       .addQueryParameter("limit", "" + limit)
+                                       .addQueryParameter("sort", "score")
+                                       .addQueryParameter("format", "xml")
+                                       .build();
 
-				LOG.info("Request url: " + url);
-				return this.restClient.requestGet(url, SearchResponse.class);
-			}
+                LOG.info("Request url: " + url);
+                return this.restClient.requestGet(url, SearchResponse.class);
+            }
 
-			@Override
-			public GetEntityResponse getEntity(String entityId)
-			{
-				String url = "http://www.uniprot.org/uniprot/" + entityId + ".xml";
-				LOG.info("Request url: " + url);
-				return this.restClient.requestGet(url, GetEntityResponse.class);
-			}
-		};
-	}
+            @Override
+            public GetEntityResponse getEntity(String entityId)
+            {
+                String url = "http://www.uniprot.org/uniprot/" + entityId + ".xml";
+                LOG.info("Request url: " + url);
+                return this.restClient.requestGet(url, GetEntityResponse.class);
+            }
+        };
+    }
 
 }
